@@ -36,3 +36,17 @@ ping 8.8.8.8
 ping www.google.com
 ```
 If you see some pings on terminal then you're ready to go!
+
+## BlackLib
+
+- Install
+```shell
+git clone https://github.com/tfmiranda/BlackLib-Modificada.git
+cd BlackLib-Modificada
+make
+```
+
+- Run
+```shell
+./main
+```
