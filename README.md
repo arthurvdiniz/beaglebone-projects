@@ -56,3 +56,7 @@ make
 ```shell
 sudo shutdown -h now
 ```
+
+## For more information
+
+[BeagleBoneBlack](https://github.com/abugim/STR-BeagleBoneBlack)
