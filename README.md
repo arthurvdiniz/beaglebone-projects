@@ -6,7 +6,7 @@ Some small projects on the beaglebone board for Real Time Systems lecture.
 - SSH
 ```shell
 ssh debian@192.168.7.2
-# password = tempwd
+# password = temppwd
 ```
 - Adding the default gateway (on Board)
 ```shell
@@ -49,4 +49,10 @@ make
 - Run
 ```shell
 ./main
+```
+
+## Shutdown
+
+```shell
+sudo shutdown -h now
 ```
