@@ -1,7 +1,3 @@
-/**
- * Autor: Tiago Fernandes de Miranda
- * Universidade Federal do Rio Grande do Norte
- */
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
@@ -10,7 +6,6 @@
 #include <vector>
 #include <array>
 
-// Inclua as classes que achar necessario
 using namespace BlackLib;
 
 int main(int argc, char * argv[]) {
@@ -183,6 +178,7 @@ int main(int argc, char * argv[]) {
                         if (sequencias_jogo[i] != sequencias_jogador[i]) {
                             Led_Lose.setValue(high);
                             nextLevel = false;
+                            break;
                         }
                     }
                 }
