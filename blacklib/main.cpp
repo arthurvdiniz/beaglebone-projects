@@ -9,10 +9,10 @@
 using namespace BlackLib;
 
 int main(int argc, char * argv[]) {
-    clock_t start, intermediate, end;
+    clock_t start, end;
     bool statusBotao = false;
     bool nextLevel, debounceStart;
-    double tempo_jogo = 5;
+    double intermediate, tempo_jogo = 5;
     int lastRand = 9999, currentRand;
 
     BlackGPIO botaoLed_1(GPIO_48, input);
@@ -44,14 +44,13 @@ int main(int argc, char * argv[]) {
         std::cout << botaoStart.getValue() << std::endl;
         if (botaoStart.getValue() == "1") {
             Led_OP.setValue(high);
-            Led_Lose.setValue(low);
             do {
                 Led_1.setValue(low);
                 Led_2.setValue(low);
                 Led_3.setValue(low);
                 Led_4.setValue(low);
 
-                sleep(1);
+                //sleep(1);
 
                 nextLevel = true;
                 currentRand = rand() % 4 + 1;
@@ -93,12 +92,11 @@ int main(int argc, char * argv[]) {
                     }
                 }
                 
-                //sleep(1.5);
-
-                // start = clock();
-
+                if(statusBotao) start = clock();
+                
                 while (statusBotao) {
                     if (botaoStart.getValue() == "1" && debounceStart) statusBotao = false;
+                    
                     if (sequencias_jogador.size() == 0) {
                         if (botaoLed_1.getValue() == "1") {
                             debounceStart = true;
@@ -166,34 +164,43 @@ int main(int argc, char * argv[]) {
                             sequencias_jogador.push_back(4);
                         }
                     }
+                    
+                    std::cout << "Tempo de jogo:" << tempo_jogo - (double)(clock()-start)/(double)(CLOCKS_PER_SEC) << std::endl;
+                    
+                    if (tempo_jogo - (double)(clock() - start)/(double)(CLOCKS_PER_SEC) < 0){
+                        std::cout << "Tempo encerrado, Fim de jogo!";
+                        Led_Lose.setValue(high);
+                        nextLevel = false;
+                        break;
+                    }
+
                 }
                 
-                // end = clock();
+                end = clock();
 
-                if (sequencias_jogador.size() > sequencias_jogo.size() || sequencias_jogador.size() < sequencias_jogo.size()) {
+                intermediate = (double)(end-start)/(double)(CLOCKS_PER_SEC);
+                tempo_jogo += intermediate;
+                std::cout << "----------------------------------------------------------------------- " << std::endl; 
+                std::cout << "Tempo da partida: " << intermediate << std::endl;
+                std::cout << "----------------------------------------------------------------------- " << std::endl; 
+                std::cout << "Novo tempo de jogo: " << tempo_jogo << std::endl;
+                std::cout << "----------------------------------------------------------------------- " << std::endl; 
+
+                if (sequencias_jogador.size() != sequencias_jogo.size()) {
+                    std::cout << "Sequência errada, Fim de jogo!";
                     Led_Lose.setValue(high);
-                    nextLevel = false;
-                } else {
+                    nextLevel = false;                    
+                } else {                    
                     for (int i = 0; i < sequencias_jogo.size(); i++)  {
                         if (sequencias_jogo[i] != sequencias_jogador[i]) {
+                            std::cout << "Sequência errada, Fim de jogo!";
                             Led_Lose.setValue(high);
-                            nextLevel = false;
-                            break;
+                            nextLevel = false;                            
                         }
                     }
                 }
 
                 sequencias_jogador.erase(sequencias_jogador.begin(), sequencias_jogador.begin() + sequencias_jogador.size());
-
-
-                // intermediate = (double) (end-start)/CLOCKS_PER_SEC;
-
-                // if (tempo_jogo - intermediate > 0){
-                //     tempo_jogo = (tempo_jogo - intermediate) + 5;
-                // } else {
-                //     //Led
-                //     break;
-                // }
 
             } while (nextLevel); 
             break;
@@ -206,6 +213,6 @@ int main(int argc, char * argv[]) {
     Led_3.setValue(low);
     Led_4.setValue(low);
 
-    sleep(10);
+    sleep(5);
     return 0;
 }
