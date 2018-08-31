@@ -12,7 +12,7 @@ int main(int argc, char * argv[]) {
     clock_t start, end;
     bool statusBotao = false;
     bool nextLevel, debounceStart;
-    double intermediate, tempo_jogo = 5;
+    double intermediate, tempo_jogo = 5, tempo_now;
     int lastRand = 9999, currentRand;
 
     BlackGPIO botaoLed_1(GPIO_48, input);
@@ -50,7 +50,7 @@ int main(int argc, char * argv[]) {
                 Led_3.setValue(low);
                 Led_4.setValue(low);
 
-                //sleep(1);
+                sleep(1);
 
                 nextLevel = true;
                 currentRand = rand() % 4 + 1;
@@ -165,39 +165,42 @@ int main(int argc, char * argv[]) {
                         }
                     }
                     
-                    std::cout << "Tempo de jogo:" << tempo_jogo - (double)(clock()-start)/(double)(CLOCKS_PER_SEC) << std::endl;
+                    tempo_now = tempo_jogo - (double)(clock()-start)/(double)(CLOCKS_PER_SEC);
+                    std::cout << "Tempo de jogo: " << tempo_now << std::endl;
                     
-                    if (tempo_jogo - (double)(clock() - start)/(double)(CLOCKS_PER_SEC) < 0){
+                    if (tempo_now <= 0.9) {
                         std::cout << "Tempo encerrado, Fim de jogo!";
                         Led_Lose.setValue(high);
                         nextLevel = false;
                         break;
                     }
-
                 }
                 
                 end = clock();
 
-                intermediate = (double)(end-start)/(double)(CLOCKS_PER_SEC);
-                tempo_jogo += intermediate;
-                std::cout << "----------------------------------------------------------------------- " << std::endl; 
-                std::cout << "Tempo da partida: " << intermediate << std::endl;
-                std::cout << "----------------------------------------------------------------------- " << std::endl; 
-                std::cout << "Novo tempo de jogo: " << tempo_jogo << std::endl;
-                std::cout << "----------------------------------------------------------------------- " << std::endl; 
-
-                if (sequencias_jogador.size() != sequencias_jogo.size()) {
-                    std::cout << "Sequência errada, Fim de jogo!";
+                if (sequencias_jogador.size() != sequencias_jogo.size() && nextLevel) {
+                    std::cout << "Sequência errada, Fim de jogo!" << std::endl;
                     Led_Lose.setValue(high);
                     nextLevel = false;                    
                 } else {                    
                     for (int i = 0; i < sequencias_jogo.size(); i++)  {
                         if (sequencias_jogo[i] != sequencias_jogador[i]) {
-                            std::cout << "Sequência errada, Fim de jogo!";
+                            std::cout << "Sequência errada, Fim de jogo!" << std::endl;
                             Led_Lose.setValue(high);
-                            nextLevel = false;                            
+                            nextLevel = false; 
+                            break;                           
                         }
                     }
+                }
+
+                if (nextLevel) {
+                    intermediate = (double)(end-start)/(double)(CLOCKS_PER_SEC);
+                    tempo_jogo += intermediate;
+                    std::cout << "----------------------------------------------------------------------- " << std::endl; 
+                    std::cout << "Tempo da partida: " << intermediate << std::endl;
+                    std::cout << "----------------------------------------------------------------------- " << std::endl; 
+                    std::cout << "Novo tempo de jogo: " << tempo_jogo << std::endl;
+                    std::cout << "----------------------------------------------------------------------- " << std::endl; 
                 }
 
                 sequencias_jogador.erase(sequencias_jogador.begin(), sequencias_jogador.begin() + sequencias_jogador.size());
