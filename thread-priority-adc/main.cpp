@@ -68,10 +68,13 @@ void *readEntries(void *arg) {
         return;     
     }
 
-    valueEntry1 = en1.getFloatValue();
-    valueEntry2 = en2.getFloatValue();
+    while (true) {
+        valueEntry1 = en1.getFloatValue();
+        valueEntry2 = en2.getFloatValue();
 
-    sleep(0.5);
+        sleep(0.5);
+    }
+
 }
 
 void *setPriorityEntry1(void *arg) {
@@ -84,28 +87,31 @@ void *setPriorityEntry1(void *arg) {
     
     struct sched_param params;
 
-    if (valueEntry1 > valueEntry2) {
-        params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
-    } else {
-        params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    while (true) {
+        if (valueEntry1 > valueEntry2) {
+            params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+        } else {
+            params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+        }
+
+        ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+
+        if (ret != 0) {
+            std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
+            return;     
+        }
+        
+        if (on) {
+            led1.setValue(high);
+            carga(1000);
+            on = false;
+        } else {
+            led1.setValue(low);
+            carga(1000);
+            on = true;
+        }
     }
 
-    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
-
-    if (ret != 0) {
-        std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
-        return;     
-    }
-    
-    if (on) {
-        led1.setValue(high);
-        carga(1000);
-        on = false;
-    } else {
-        led1.setValue(low);
-        carga(1000);
-        on = true;
-    }
 }
 void *setPriorityEntry2(void *arg) {
     BlackGPIO led2(GPIO_26, output);
@@ -117,27 +123,32 @@ void *setPriorityEntry2(void *arg) {
     
     struct sched_param params;
 
-    if (valueEntry2 > valueEntry1) {
-        params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
-    } else {
-        params.sched_priority = sched_get_priority_min(SCHED_FIFO);
-    }
+    while (true) {
+        if (valueEntry2 > valueEntry1) {
+            params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+        } else {
+            params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+        }
 
-    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+        ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
 
-    if (ret != 0) {
-        std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
-        return;     
-    }
+        if (ret != 0) {
+            std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
+            return;     
+        }
 
-    if (on) {
-        led2.setValue(high);
-        carga(1000);
-        on = false;
-    } else {
-        led2.setValue(low);
-        carga(1000);
-        on = true;
+        if (on) {
+            led2.setValue(high);
+            carga(1000);
+            on = false;valueEntry1 = en1.getFloatValue();
+    valueEntry2 = en2.getFloatValue();
+
+    
+        } else {
+            led2.setValue(low);
+            carga(1000);
+            on = true;
+        }
     }
 }
 
