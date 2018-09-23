@@ -1,3 +1,7 @@
+/**
+ * Autores: Arthur Diniz, Daniel Menescal e Elvis Ferreira
+ * Universidade Federal do Rio Grande do Norte
+ */
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>

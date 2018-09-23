@@ -1,215 +1,155 @@
 /**
- * Autor: Tiago Fernandes de Miranda
+ * Autores: Arthur Diniz, Daniel Menescal e Elvis Ferreira
  * Universidade Federal do Rio Grande do Norte
  */
-#include <stdlib.h>
-#include <time.h>
 #include <iostream>
-#include "BlackGPIO/BlackGPIO.h"
+#include <stdlib.h>
 #include <unistd.h>
-#include <vector>
-#include <array>
+#include <time.h>
+#include <math.h>
+#include <pthread.h>
+#include <sched.h>
+#include "BlackGPIO/BlackGPIO.h"
+#include "ADC/Adc.h"
 
-// Inclua as classes que achar necessario
 using namespace BlackLib;
 
+void *readEntries(void *arg);
+void *setPriorityEntry1(void *arg);
+void *setPriorityEntry2(void *arg);
+
+float valueEntry1;
+float valueEntry2;
+
 int main(int argc, char * argv[]) {
-    clock_t start, intermediate, end;
-    bool statusBotao = false;
-    bool nextLevel, debounceStart;
-    double tempo_jogo = 5;
-    int lastRand = 9999, currentRand;
+    int res1, res2, res3;
+    void *resf1, *resf2, *resf3;
 
-    BlackGPIO botaoLed_1(GPIO_48, input);
-    BlackGPIO botaoLed_2(GPIO_49, input);
-    BlackGPIO botaoLed_3(GPIO_15, input);
-    BlackGPIO botaoLed_4(GPIO_20, input);
-    BlackGPIO botaoStart(GPIO_14, input);
+    pthread_t thread1, thread2, thread3;
 
-    BlackGPIO Led_1(GPIO_44, output);
-    BlackGPIO Led_2(GPIO_26, output);
-    BlackGPIO Led_3(GPIO_67, output);
-    BlackGPIO Led_4(GPIO_68, output);
-    BlackGPIO Led_OP(GPIO_66, output);
-    BlackGPIO Led_Lose(GPIO_65, output);
+    res1 = pthread_create(&thread1, NULL, readEntries, (void *) 1);
+    res2 = pthread_create(&thread2, NULL, setPriorityEntry1, (void *) 2);
+    res3 = pthread_create(&thread3, NULL, setPriorityEntry2, (void *) 3);
 
-    std::vector<int> sequencias_jogo;
-    std::vector<int> sequencias_jogador;
-
-    Led_1.setValue(low);
-    Led_2.setValue(low);
-    Led_3.setValue(low);
-    Led_4.setValue(low);
-    Led_OP.setValue(low);
-    Led_Lose.setValue(low);
-
-    srand(time(NULL));
-
-    while (true) {
-        std::cout << botaoStart.getValue() << std::endl;
-        if (botaoStart.getValue() == "1") {
-            Led_OP.setValue(high);
-            Led_Lose.setValue(low);
-            do {
-                Led_1.setValue(low);
-                Led_2.setValue(low);
-                Led_3.setValue(low);
-                Led_4.setValue(low);
-
-                sleep(1);
-
-                nextLevel = true;
-                currentRand = rand() % 4 + 1;
-                while (currentRand == lastRand) {
-                    currentRand = rand() % 4 + 1;
-                }
-                sequencias_jogo.push_back(currentRand);
-                lastRand = currentRand;
-
-                for (int i = 0; i < sequencias_jogo.size(); i++) {
-                    switch (sequencias_jogo[i]) {
-                        case 1:
-                            Led_1.setValue(high);
-                            sleep(1);
-                            Led_1.setValue(low);
-                            break;
-                        case 2:
-                            Led_2.setValue(high);
-                            sleep(1);
-                            Led_2.setValue(low);
-                            break;
-                        case 3:
-                            Led_3.setValue(high);
-                            sleep(1);
-                            Led_3.setValue(low);
-                            break;
-                        case 4:
-                            Led_4.setValue(high);
-                            sleep(1);
-                            Led_4.setValue(low);
-                            break;
-                    }
-                }
-
-                while (!statusBotao) {
-                    if (botaoStart.getValue() == "1") {
-                        statusBotao = true;
-                        debounceStart = false;
-                    }
-                }
-                
-                //sleep(1.5);
-
-                // start = clock();
-
-                while (statusBotao) {
-                    if (botaoStart.getValue() == "1" && debounceStart) statusBotao = false;
-                    if (sequencias_jogador.size() == 0) {
-                        if (botaoLed_1.getValue() == "1") {
-                            debounceStart = true;
-                            Led_2.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(low);
-                            Led_1.setValue(high);
-                            sequencias_jogador.push_back(1);
-                        }
-                        else if (botaoLed_2.getValue() == "1") {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(low);
-                            Led_2.setValue(high);
-                            sequencias_jogador.push_back(2);
-                        }
-                        else if (botaoLed_3.getValue() == "1") {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_2.setValue(low);
-                            Led_4.setValue(low);
-                            Led_3.setValue(high);
-                            sequencias_jogador.push_back(3);
-                        }
-                        else if (botaoLed_4.getValue() == "1") {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_2.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(high);
-                            sequencias_jogador.push_back(4);
-                        }
-                    } else {
-                        if (botaoLed_1.getValue() == "1" && sequencias_jogador.back() != 1) {
-                            debounceStart = true;
-                            Led_2.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(low);
-                            Led_1.setValue(high);
-                            sequencias_jogador.push_back(1);
-                        }
-                        else if (botaoLed_2.getValue() == "1" && sequencias_jogador.back() != 2) {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(low);
-                            Led_2.setValue(high);
-                            sequencias_jogador.push_back(2);
-                        }
-                        else if (botaoLed_3.getValue() == "1" && sequencias_jogador.back() != 3) {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_2.setValue(low);
-                            Led_4.setValue(low);
-                            Led_3.setValue(high);
-                            sequencias_jogador.push_back(3);
-                        }
-                        else if (botaoLed_4.getValue() == "1" && sequencias_jogador.back() != 4) {
-                            debounceStart = true;
-                            Led_1.setValue(low);
-                            Led_2.setValue(low);
-                            Led_3.setValue(low);
-                            Led_4.setValue(high);
-                            sequencias_jogador.push_back(4);
-                        }
-                    }
-                }
-                
-                // end = clock();
-
-                if (sequencias_jogador.size() > sequencias_jogo.size() || sequencias_jogador.size() < sequencias_jogo.size()) {
-                    Led_Lose.setValue(high);
-                    nextLevel = false;
-                } else {
-                    for (int i = 0; i < sequencias_jogo.size(); i++)  {
-                        if (sequencias_jogo[i] != sequencias_jogador[i]) {
-                            Led_Lose.setValue(high);
-                            nextLevel = false;
-                        }
-                    }
-                }
-
-                sequencias_jogador.erase(sequencias_jogador.begin(), sequencias_jogador.begin() + sequencias_jogador.size());
-
-
-                // intermediate = (double) (end-start)/CLOCKS_PER_SEC;
-
-                // if (tempo_jogo - intermediate > 0){
-                //     tempo_jogo = (tempo_jogo - intermediate) + 5;
-                // } else {
-                //     //Led
-                //     break;
-                // }
-
-            } while (nextLevel); 
-            break;
-        }
+    if (res1 || res2 || res3) {
+        std::cout << "Erro ao criar a thread" << std::endl;
+        exit(-1);
     }
 
-    Led_OP.setValue(low);
-    Led_1.setValue(low);
-    Led_2.setValue(low);
-    Led_3.setValue(low);
-    Led_4.setValue(low);
+    res1 = pthread_join(thread1, &resf1);
+    res2 = pthread_join(thread2, &resf2);
+    res3 = pthread_join(thread3, &resf3);
 
-    sleep(10);
+    if (res1 || res2 || res3) {
+        std::cout << "Erro ao fazer o join" << std::endl;
+        exit(-1);
+    }
+
+    pthread_exit(NULL);
+
     return 0;
 }
+
+void *readEntries(void *arg) {
+    ADC en1(AIN0);
+    ADC en2(AIN1);
+
+    int ret;
+
+    pthread_t this_thread = pthread_self();
+
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+
+    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+
+    if (ret != 0) {
+        std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
+        return;     
+    }
+
+    valueEntry1 = en1.getFloatValue();
+    valueEntry2 = en2.getFloatValue();
+
+    sleep(0.5);
+}
+
+void *setPriorityEntry1(void *arg) {
+    BlackGPIO led1(GPIO_44, output);
+
+    int ret;
+    bool on = false;
+
+    pthread_t this_thread = pthread_self();
+    
+    struct sched_param params;
+
+    if (valueEntry1 > valueEntry2) {
+        params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+    } else {
+        params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    }
+
+    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+
+    if (ret != 0) {
+        std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
+        return;     
+    }
+    
+    if (on) {
+        led1.setValue(high);
+        carga(1000);
+        on = false;
+    } else {
+        led1.setValue(low);
+        carga(1000);
+        on = true;
+    }
+}
+void *setPriorityEntry2(void *arg) {
+    BlackGPIO led2(GPIO_26, output);
+
+    int ret;
+    bool on = false;
+
+    pthread_t this_thread = pthread_self();
+    
+    struct sched_param params;
+
+    if (valueEntry2 > valueEntry1) {
+        params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+    } else {
+        params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    }
+
+    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+
+    if (ret != 0) {
+        std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
+        return;     
+    }
+
+    if (on) {
+        led2.setValue(high);
+        carga(1000);
+        on = false;
+    } else {
+        led2.setValue(low);
+        carga(1000);
+        on = true;
+    }
+}
+
+void carga(int k){
+	float f = 0.999999;
+	for (int i=0; i<k; i++) {
+		f = f*f*f*f*f;
+		f = 1.56;
+		for(int j=0; j<k; j++){
+			f = sin(f)*sin(f)*f*f*f;
+		}
+	}
+}
+
+// http://www.yonch.com/tech/82-linux-thread-priority
