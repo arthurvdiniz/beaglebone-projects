@@ -47,6 +47,7 @@ make
 ```
 
 - Run
+Important: before to build and run your program run sudo su
 ```shell
 ./main
 ```
