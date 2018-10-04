@@ -50,6 +50,17 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
+void carga(int k){
+	float f = 0.999999;
+	for (int i=0; i<k; i++) {
+		f = f*f*f*f*f;
+		f = 1.56;
+		for(int j=0; j<k; j++){
+			f = sin(f)*sin(f)*f*f*f;
+		}
+	}
+}
+
 void *readEntries(void *arg) {
     ADC en1(AIN0);
     ADC en2(AIN1);
@@ -65,7 +76,7 @@ void *readEntries(void *arg) {
 
     if (ret != 0) {
         std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
-        return;     
+        exit(-1);    
     }
 
     while (true) {
@@ -98,7 +109,7 @@ void *setPriorityEntry1(void *arg) {
 
         if (ret != 0) {
             std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
-            return;     
+            exit(-1);   
         }
         
         if (on) {
@@ -114,6 +125,7 @@ void *setPriorityEntry1(void *arg) {
 
 }
 void *setPriorityEntry2(void *arg) {
+
     BlackGPIO led2(GPIO_26, output);
 
     int ret;
@@ -134,33 +146,18 @@ void *setPriorityEntry2(void *arg) {
 
         if (ret != 0) {
             std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
-            return;     
+            exit(-1);     
         }
-
         if (on) {
             led2.setValue(high);
             carga(1000);
-            on = false;valueEntry1 = en1.getFloatValue();
-    valueEntry2 = en2.getFloatValue();
-
-    
+            on = false;
         } else {
             led2.setValue(low);
             carga(1000);
             on = true;
         }
     }
-}
-
-void carga(int k){
-	float f = 0.999999;
-	for (int i=0; i<k; i++) {
-		f = f*f*f*f*f;
-		f = 1.56;
-		for(int j=0; j<k; j++){
-			f = sin(f)*sin(f)*f*f*f;
-		}
-	}
 }
 
 // http://www.yonch.com/tech/82-linux-thread-priority
