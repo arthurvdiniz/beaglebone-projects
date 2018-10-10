@@ -70,9 +70,9 @@ void *readEntries(void *arg) {
     pthread_t this_thread = pthread_self();
 
     struct sched_param params;
-    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    params.sched_priority = sched_get_priority_max(SCHED_RR);
 
-    ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+    ret = pthread_setschedparam(this_thread, SCHED_RR, &params);
 
     if (ret != 0) {
         std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
@@ -100,9 +100,9 @@ void *setPriorityEntry1(void *arg) {
 
     while (true) {
         if (valueEntry1 > valueEntry2) {
-            params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+            params.sched_priority = sched_get_priority_max(SCHED_RR) - sched_get_priority_min(SCHED_RR);
         } else {
-            params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+            params.sched_priority = sched_get_priority_min(SCHED_RR);
         }
 
         ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
@@ -137,12 +137,12 @@ void *setPriorityEntry2(void *arg) {
 
     while (true) {
         if (valueEntry2 > valueEntry1) {
-            params.sched_priority = sched_get_priority_max(SCHED_FIFO) - sched_get_priority_min(SCHED_FIFO);
+            params.sched_priority = sched_get_priority_max(SCHED_RR) - sched_get_priority_min(SCHED_RR);
         } else {
-            params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+            params.sched_priority = sched_get_priority_min(SCHED_RR);
         }
 
-        ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+        ret = pthread_setschedparam(this_thread, SCHED_RR, &params);
 
         if (ret != 0) {
             std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
