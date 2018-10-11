@@ -105,7 +105,7 @@ void *setPriorityEntry1(void *arg) {
             params.sched_priority = sched_get_priority_min(SCHED_RR);
         }
 
-        ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+        ret = pthread_setschedparam(this_thread, SCHED_RR, &params);
 
         if (ret != 0) {
             std::cout << "Unsuccessful in setting thread realtime prio" << std::endl;
