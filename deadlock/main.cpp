@@ -13,7 +13,9 @@
 #include "ADC/Adc.h"
 
 #define NUM_TRAINS 4
-#define MAX_VALUE 1.8
+#define MAX_VALUE 3
+#define SEM_NORMAL 5
+#define SEM_DANGER 2
 
 using namespace BlackLib;
 
@@ -29,6 +31,8 @@ void *handleTrain4(void *arg);
 pthread_t thr[NUM_TRAINS];
 
 float valueEntries[NUM_TRAINS];
+
+sem_t semNormal[SEM_NORMAL], semDanger[SEM_DANGER];
 
 void handleCreationThread(int res) {
     if (res) {
@@ -51,11 +55,32 @@ void handlePriority(int res) {
     }
 }
 
+void handleInitSemaphore(int res) {
+    if (res) {
+        printf("Error on creating semaphore - %d.\n", res);
+        exit(-1);
+    }
+}
+
+void handleDestroySemaphore(int res) {
+    if (res) {
+        printf("Error on destroying semaphore - %d.\n", res);
+        exit(-1);
+    }
+}
+
 int main(int argc, char * argv[]) {
     void *resStatus;
 
     pthread_t thrReadEntries, thrSetPriorities;
 
+    for (int i = 0; i < SEM_NORMAL; i++) {
+        handleInitSemaphore(sem_init(&semNormal[i], 0, 1));
+    }
+
+    for (int i = 0; i < SEM_DANGER; i++) {
+        handleInitSemaphore(sem_init(&semDanger[i], 0, 2));
+    }
 
     handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
     handleCreationThread(pthread_create(&thrSetPriorities, NULL, setPriorities, (void *) 2));
@@ -74,6 +99,14 @@ int main(int argc, char * argv[]) {
     handleJoinThread(pthread_join(thr[3], &resStatus));
 
     pthread_exit(NULL);
+
+    for (int i = 0; i < SEM_NORMAL; i++) {
+        handleDestroySemaphore(sem_destroy(&semNormal[i]));
+    }
+
+    for (int i = 0; i < SEM_DANGER; i++) {
+        handleDestroySemaphore(sem_destroy(&semDanger[i]));
+    }
 
     return 0;
 }
@@ -112,7 +145,11 @@ void *setPriorities(void *arg) {
 
     while (true) {
         for (int i = 0; i < NUM_TRAINS; i++) {
-            params.sched_priority = (int) ((valueEntries[i] / MAX_VALUE) * (sched_get_priority_max(SCHED_RR) - 2));
+            if (i = 0) { 
+                params.sched_priority = (int) ((valueEntries[i] / 1.8) * (sched_get_priority_max(SCHED_RR) - 2));
+            } else {
+                params.sched_priority = (int) ((valueEntries[i] / MAX_VALUE) * (sched_get_priority_max(SCHED_RR) - 2));
+            }
             handlePriority(pthread_setschedparam(thr[i], SCHED_RR, &params));
         }
 
@@ -121,6 +158,8 @@ void *setPriorities(void *arg) {
 }
 
 void *handleTrain1() {
+    int sleepTime = 0.2;
+
     BlackGPIO ledFree(GPIO_44, output);
     BlackGPIO ledLock1(GPIO_44, output);
     BlackGPIO ledLock2(GPIO_44, output);
@@ -128,37 +167,76 @@ void *handleTrain1() {
 
     while (true) {
         ledFree.setValue(high);
+        sleep(sleepTime*3);
         ledFree.setValue(low);
+
+        sem_wait(&semNormal[0]);
+        sem_wait(&semDanger[0]);
+
         ledLock1.setValue(high);
+        sleep(sleepTime);
         ledLock1.setValue(low);
+
+        sem_post(&semNormal[0]);
+        sem_post(&semDanger[0]);
+        sem_wait(&semNormal[1]);
+        sem_wait(&semDanger[1]);
+
         ledLock2.setValue(high);
+        sleep(sleepTime);
         ledLock2.setValue(low);
+
+        sem_post(&semNormal[1]);
+        sem_post(&semDanger[1]);
+        sem_wait(&semNormal[2]);
+
         ledLock3.setValue(high);
+        sleep(sleepTime);
         ledLock3.setValue(low);
 
-        sleep(0.5);
+        sem_post(&semNormal[2]);
+
+        sleep(sleepTime);
     }
 }
 
 void *handleTrain2() {
+    int sleepTime = 0.2;
+
     BlackGPIO ledFree(GPIO_44, output);
     BlackGPIO ledLock1(GPIO_44, output);
     BlackGPIO ledLock2(GPIO_44, output);
 
     while (true) {
         ledFree.setValue(high);
+        sleep(sleepTime*2);
         ledFree.setValue(low);
+
+        sem_wait(&semNormal[3]);
+        sem_wait(&semDanger[0]);
+
         ledLock1.setValue(high);
+        sleep(sleepTime);
         ledLock1.setValue(low);
+
+        sem_post(&semNormal[3]);
+        sem_post(&semDanger[0]);
+        sem_wait(&semNormal[0]);
+
         ledLock2.setValue(high);
+        sleep(sleepTime);
         ledLock2.setValue(low);
 
-        sleep(0.5);
+        sem_post(&semNormal[0]);
+
+        sleep(sleepTime);
     }
     
 }
 
 void *handleTrain3() {
+    int sleepTime = 0.2;
+
     BlackGPIO ledFree(GPIO_44, output);
     BlackGPIO ledLock1(GPIO_44, output);
     BlackGPIO ledLock2(GPIO_44, output);
@@ -166,32 +244,69 @@ void *handleTrain3() {
     
     while (true) {
         ledFree.setValue(high);
+        sleep(sleepTime);
         ledFree.setValue(low);
+
+        sem_wait(&semNormal[4]);
+        sem_wait(&semDanger[1]);
+
         ledLock1.setValue(high);
+        sleep(sleepTime);
         ledLock1.setValue(low);
+
+        sem_post(&semNormal[4]);
+        sem_post(&semDanger[1]);
+        sem_wait(&semNormal[1]);
+        sem_wait(&semDanger[0]);
+
         ledLock2.setValue(high);
+        sleep(sleepTime);
         ledLock2.setValue(low);
+
+        sem_post(&semNormal[1]);
+        sem_post(&semDanger[0]);
+        sem_wait(&semNormal[3]);
+
         ledLock3.setValue(high);
+        sleep(sleepTime);
         ledLock3.setValue(low);
 
-        sleep(0.5);
+        sem_post(&semNormal[3]);
+
+        sleep(sleepTime);
     }
 }
 
 void *handleTrain4() {
+    int sleepTime = 0.2;
+
     BlackGPIO ledFree(GPIO_44, output);
     BlackGPIO ledLock1(GPIO_44, output);
     BlackGPIO ledLock2(GPIO_44, output);
 
     while (true) {
+        sem_wait(&semNormal[2]);
+        sem_wait(&semDanger[1]);
+
         ledLock1.setValue(high);
+        sleep(sleepTime);
         ledLock1.setValue(low);
+
+        sem_post(&semNormal[2]);
+        sem_post(&semDanger[1]);
+        sem_wait(&semNormal[4]);
+
         ledLock2.setValue(high);
+        sleep(sleepTime);
         ledLock2.setValue(low);
+
+        sem_post(&semNormal[4]);
+
         ledFree.setValue(high);
+        sleep(sleepTime*2);
         ledFree.setValue(low);
-        
-        sleep(0.5);
+
+        sleep(sleepTime);
     }
     
 }
