@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sched.h>
+#include <semaphore.h>
+
 #include "BlackGPIO/BlackGPIO.h"
 #include "ADC/Adc.h"
 
@@ -119,19 +121,77 @@ void *setPriorities(void *arg) {
 }
 
 void *handleTrain1() {
+    BlackGPIO ledFree(GPIO_44, output);
+    BlackGPIO ledLock1(GPIO_44, output);
+    BlackGPIO ledLock2(GPIO_44, output);
+    BlackGPIO ledLock3(GPIO_44, output);
 
+    while (true) {
+        ledFree.setValue(high);
+        ledFree.setValue(low);
+        ledLock1.setValue(high);
+        ledLock1.setValue(low);
+        ledLock2.setValue(high);
+        ledLock2.setValue(low);
+        ledLock3.setValue(high);
+        ledLock3.setValue(low);
+
+        sleep(0.5);
+    }
 }
 
 void *handleTrain2() {
+    BlackGPIO ledFree(GPIO_44, output);
+    BlackGPIO ledLock1(GPIO_44, output);
+    BlackGPIO ledLock2(GPIO_44, output);
+
+    while (true) {
+        ledFree.setValue(high);
+        ledFree.setValue(low);
+        ledLock1.setValue(high);
+        ledLock1.setValue(low);
+        ledLock2.setValue(high);
+        ledLock2.setValue(low);
+
+        sleep(0.5);
+    }
     
 }
 
 void *handleTrain3() {
+    BlackGPIO ledFree(GPIO_44, output);
+    BlackGPIO ledLock1(GPIO_44, output);
+    BlackGPIO ledLock2(GPIO_44, output);
+    BlackGPIO ledLock3(GPIO_44, output);
     
+    while (true) {
+        ledFree.setValue(high);
+        ledFree.setValue(low);
+        ledLock1.setValue(high);
+        ledLock1.setValue(low);
+        ledLock2.setValue(high);
+        ledLock2.setValue(low);
+        ledLock3.setValue(high);
+        ledLock3.setValue(low);
+
+        sleep(0.5);
+    }
 }
 
 void *handleTrain4() {
+    BlackGPIO ledFree(GPIO_44, output);
+    BlackGPIO ledLock1(GPIO_44, output);
+    BlackGPIO ledLock2(GPIO_44, output);
+
+    while (true) {
+        ledLock1.setValue(high);
+        ledLock1.setValue(low);
+        ledLock2.setValue(high);
+        ledLock2.setValue(low);
+        ledFree.setValue(high);
+        ledFree.setValue(low);
+        
+        sleep(0.5);
+    }
     
 }
-
-// http://www.yonch.com/tech/82-linux-thread-priority
