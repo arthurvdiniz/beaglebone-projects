@@ -135,7 +135,6 @@ void *readEntries(void *arg) {
 }
 
 void *setPriorities(void *arg) {
-    int ret;
     struct sched_param params;
 
     pthread_t this_thread = pthread_self();
@@ -145,7 +144,7 @@ void *setPriorities(void *arg) {
 
     while (true) {
         for (int i = 0; i < NUM_TRAINS; i++) {
-            if (i = 0) { 
+            if (i == 0) { 
                 params.sched_priority = (int) ((valueEntries[i] / 1.8) * (sched_get_priority_max(SCHED_RR) - 2));
             } else {
                 params.sched_priority = (int) ((valueEntries[i] / MAX_VALUE) * (sched_get_priority_max(SCHED_RR) - 2));
@@ -157,7 +156,7 @@ void *setPriorities(void *arg) {
     }
 }
 
-void *handleTrain1() {
+void *handleTrain1(void *arg) {
     int sleepTime = 0.2;
 
     BlackGPIO ledFree(GPIO_44, output);
@@ -200,7 +199,7 @@ void *handleTrain1() {
     }
 }
 
-void *handleTrain2() {
+void *handleTrain2(void *arg) {
     int sleepTime = 0.2;
 
     BlackGPIO ledFree(GPIO_44, output);
@@ -234,7 +233,7 @@ void *handleTrain2() {
     
 }
 
-void *handleTrain3() {
+void *handleTrain3(void *arg) {
     int sleepTime = 0.2;
 
     BlackGPIO ledFree(GPIO_44, output);
@@ -277,7 +276,7 @@ void *handleTrain3() {
     }
 }
 
-void *handleTrain4() {
+void *handleTrain4(void *arg) {
     int sleepTime = 0.2;
 
     BlackGPIO ledFree(GPIO_44, output);
