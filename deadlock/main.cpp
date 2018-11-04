@@ -15,11 +15,10 @@
 #define NUM_TRAINS 4
 // #define MAX_VALUE 3
 #define SEM_NORMAL 5
-//#define SEM_DANGER 2
+#define SEM_DANGER 2
 #define SLEEP_TIME 1
 
 using namespace BlackLib;
-
 
 // void *readEntries(void *arg);
 // void *setPriorities(void *arg);
@@ -33,7 +32,7 @@ pthread_t thr[NUM_TRAINS];
 
 // float valueEntries[NUM_TRAINS];
 
-sem_t semNormal[SEM_NORMAL], semDanger;
+sem_t semNormal[SEM_NORMAL], semDanger[SEM_DANGER], semAux;
 
 void handleCreationThread(int res) {
     if (res) {
@@ -79,8 +78,12 @@ int main(int argc, char * argv[]) {
         handleInitSemaphore(sem_init(&semNormal[i], 0, 1));
     }
 
-    handleInitSemaphore(sem_init(&semDanger, 0, 3));
-
+    for (int i = 0; i < SEM_DANGER; i++) {
+        handleInitSemaphore(sem_init(&semDanger[i], 0, 2));
+    }
+   
+    handleInitSemaphore(sem_init(&semAux, 0, 3));
+   
     // handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
     // handleCreationThread(pthread_create(&thrSetPriorities, NULL, setPriorities, (void *) 2));
 
@@ -103,8 +106,10 @@ int main(int argc, char * argv[]) {
         handleDestroySemaphore(sem_destroy(&semNormal[i]));
     }
 
-    handleDestroySemaphore(sem_destroy(&semDanger));
-
+    for (int i = 0; i < SEM_DANGER; i++) {
+        handleDestroySemaphore(sem_destroy(&semDanger[i]));
+    }
+        handleDestroySemaphore(sem_destroy(&semAux));
     return 0;
 }
 
@@ -167,7 +172,8 @@ void *handleTrain1(void *arg) {
         sleep(sleepTime);
         sleep(sleepTime);
         sem_wait(&semNormal[0]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[0]);
+        sem_wait(&semAux);
         ledFree.setValue(low);
 
 
@@ -175,9 +181,10 @@ void *handleTrain1(void *arg) {
         ledLock1.setValue(high);
         sleep(sleepTime);
         sem_wait(&semNormal[1]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[1]);
         sem_post(&semNormal[0]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[0]);
+        sem_post(&semAux);
         ledLock1.setValue(low);
 
 
@@ -186,7 +193,7 @@ void *handleTrain1(void *arg) {
         sleep(sleepTime);
         sem_wait(&semNormal[2]);
         sem_post(&semNormal[1]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[1]);
         ledLock2.setValue(low);
 
 
@@ -213,7 +220,8 @@ void *handleTrain2(void *arg) {
         ledFree.setValue(high);
         sleep(sleepTime);
         sem_wait(&semNormal[3]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[0]);
+        sem_wait(&semAux);
         ledFree.setValue(low);
 
 
@@ -222,7 +230,8 @@ void *handleTrain2(void *arg) {
         sleep(sleepTime);
         sem_wait(&semNormal[0]);
         sem_post(&semNormal[3]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[0]);
+        sem_post(&semAux);
         ledLock1.setValue(low);
 
 
@@ -252,7 +261,8 @@ void *handleTrain3(void *arg) {
         ledFree.setValue(high);
         sleep(sleepTime);
         sem_wait(&semNormal[4]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[1]);
+        sem_wait(&semAux);
         ledFree.setValue(low);
 
 
@@ -260,9 +270,10 @@ void *handleTrain3(void *arg) {
         ledLock1.setValue(high);
         sleep(sleepTime);
         sem_wait(&semNormal[1]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[0]);
         sem_post(&semNormal[4]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[1]);
+        sem_post(&semAux);
         ledLock1.setValue(low);
 
 
@@ -271,7 +282,7 @@ void *handleTrain3(void *arg) {
         sleep(sleepTime);
         sem_wait(&semNormal[3]);
         sem_post(&semNormal[1]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[0]);
         ledLock2.setValue(low);
 
 
@@ -298,7 +309,8 @@ void *handleTrain4(void *arg) {
 
         if (!first) {
             sem_wait(&semNormal[2]);
-            sem_wait(&semDanger);
+            sem_wait(&semDanger[1]);
+            sem_wait(&semAux);
         }
 
         first = true;
@@ -307,7 +319,8 @@ void *handleTrain4(void *arg) {
         sleep(sleepTime);
         sem_wait(&semNormal[4]);
         sem_post(&semNormal[2]);
-        sem_post(&semDanger);
+        sem_post(&semDanger[1]);
+        sem_post(&semAux);
         ledLock1.setValue(low);
 
 
@@ -323,7 +336,8 @@ void *handleTrain4(void *arg) {
         sleep(sleepTime);
         sleep(sleepTime);
         sem_wait(&semNormal[2]);
-        sem_wait(&semDanger);
+        sem_wait(&semDanger[1]);
+        sem_wait(&semAux);
         ledFree.setValue(low);
 
     }
