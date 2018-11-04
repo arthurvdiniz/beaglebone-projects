@@ -79,9 +79,7 @@ int main(int argc, char * argv[]) {
         handleInitSemaphore(sem_init(&semNormal[i], 0, 1));
     }
 
-    for (int i = 0; i < SEM_DANGER; i++) {
-        handleInitSemaphore(sem_init(&semDanger, 0, 3));
-    }
+    handleInitSemaphore(sem_init(&semDanger, 0, 3));
 
     // handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
     // handleCreationThread(pthread_create(&thrSetPriorities, NULL, setPriorities, (void *) 2));
@@ -105,9 +103,7 @@ int main(int argc, char * argv[]) {
         handleDestroySemaphore(sem_destroy(&semNormal[i]));
     }
 
-    for (int i = 0; i < SEM_DANGER; i++) {
-        handleDestroySemaphore(sem_destroy(&semDanger));
-    }
+    handleDestroySemaphore(sem_destroy(&semDanger));
 
     return 0;
 }
