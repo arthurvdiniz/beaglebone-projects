@@ -89,18 +89,14 @@ int main(int argc, char * argv[]) {
     handleInitSemaphore(sem_init(&semAux, 0, 3));
 
     // handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
-
     // handleCreationThread(pthread_create(&thrSetPriorities, NULL, setPriorities, (void *) 2));
     
     handleCreationThread(pthread_create(&thr[0], NULL, handleTrain1, NULL));
     handleCreationThread(pthread_create(&thr[1], NULL, handleTrain2, NULL));
     handleCreationThread(pthread_create(&thr[2], NULL, handleTrain3, NULL));
     handleCreationThread(pthread_create(&thr[3], NULL, handleTrain4, NULL));
-
+    
     // handleJoinThread(pthread_join(thrReadEntries, &resStatus));
-
-    // handleJoinThread(pthread_join(thrSetPriorities, &resStatus));
-
     handleJoinThread(pthread_join(thr[0], NULL));
     handleJoinThread(pthread_join(thr[1], NULL));
     handleJoinThread(pthread_join(thr[2], NULL));
@@ -213,13 +209,11 @@ void *handleTrain1(void *arg) {
         pthread_mutex_lock(&mutex[2]);
         // sem_wait(&semNormal[2]);
 
-        printf("Trem 1 -> critico 2\n");
         // sem_post(&semNormal[1]);
         pthread_mutex_unlock(&mutex[1]);
-        sem_post(&semDanger[1]);
-        ledLock2.setValue(low);
-        ledLock3.setValue(high);
-        sleep(sleepTime);
+        sem_wait(&semNormal[2]);
+
+        printf("Trem 1 -> critico 2\n");
         pthread_mutex_unlock(&mutex[2]);
         // sem_post(&semNormal[2]);
         ledLock3.setValue(low);
@@ -249,6 +243,7 @@ void *handleTrain2(void *arg) {
         
         // sem_wait(&semNormal[3]);
         pthread_mutex_lock(&mutex[3]);
+        sem_wait(&semNormal[3]);
         sem_wait(&semDanger[0]);
         sem_wait(&semAux);
 
@@ -262,6 +257,10 @@ void *handleTrain2(void *arg) {
         printf("Trem 2 -> critico 0\n");
         // sem_post(&semNormal[3]);
         pthread_mutex_unlock(&mutex[3]);
+        sem_wait(&semNormal[0]);
+
+        printf("Trem 2 -> critico 0\n");
+        sem_post(&semNormal[3]);
         sem_post(&semDanger[0]);
         sem_post(&semAux);
         ledLock1.setValue(low);        
@@ -306,6 +305,7 @@ void *handleTrain3(void *arg) {
         printf("Trem 3 -> critico 1\n");
         pthread_mutex_unlock(&mutex[4]);
         // sem_post(&semNormal[4]);
+        sem_post(&semNormal[4]);
         sem_post(&semDanger[1]);
         sem_post(&semAux);
         ledLock1.setValue(low);
@@ -317,6 +317,10 @@ void *handleTrain3(void *arg) {
         printf("Trem 3 -> critico 3\n");
         pthread_mutex_unlock(&mutex[1]);
         // sem_post(&semNormal[1]);
+        sem_wait(&semNormal[3]);
+
+        printf("Trem 3 -> critico 3\n");
+        sem_post(&semNormal[1]);
         sem_post(&semDanger[0]);
         ledLock2.setValue(low);
         ledLock3.setValue(high);
@@ -356,6 +360,10 @@ void *handleTrain4(void *arg) {
         printf("Trem 4 -> critico 4\n");
         pthread_mutex_unlock(&mutex[2]);
         // sem_post(&semNormal[2]);
+        sem_wait(&semNormal[4]);
+
+        printf("Trem 4 -> critico 4\n");
+        sem_post(&semNormal[2]);
         sem_post(&semDanger[1]);
         sem_post(&semAux);
         ledLock1.setValue(low);        
