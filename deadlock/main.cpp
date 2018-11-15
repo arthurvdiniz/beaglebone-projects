@@ -21,7 +21,7 @@
 using namespace BlackLib;
 
 void *readEntries(void *arg);
-void *setPriorities(void *arg);
+void *setSpeed(void *arg);
 
 void *handleTrain1(void *arg);
 void *handleTrain2(void *arg);
@@ -50,12 +50,12 @@ void handleJoinThread(int res) {
     }
 }
 
-// void handlePriority(int res) {
-//     if (res) {
-//         printf("Error in setting thread prio - %d.\n", res);
-//         exit(-1);
-//     }
-// }
+void handlePriority(int res) {
+    if (res) {
+        printf("Error in setting thread prio - %d.\n", res);
+        exit(-1);
+    }
+}
 
 void handleInitSemaphore(int res) {
     if (res) {
@@ -72,9 +72,7 @@ void handleDestroySemaphore(int res) {
 }
 
 int main(int argc, char * argv[]) {
-    //void *resStatus;
-
-    // pthread_t thrReadEntries, thrSetPriorities;
+    pthread_t thrReadEntries, thrSetSpeed;
 
     for (int i = 0; i < SEM_NORMAL; i++) {
         handleInitSemaphore(sem_init(&semNormal[i], 0, 1));
@@ -86,16 +84,16 @@ int main(int argc, char * argv[]) {
 
     handleInitSemaphore(sem_init(&semAux, 0, 3));
 
-    // handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
-    // handleCreationThread(pthread_create(&thrSetPriorities, NULL, setPriorities, (void *) 2));
+    handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, NULL));
+    handleCreationThread(pthread_create(&thrSetSpeed, NULL, setSpeed, NULL));
     
     handleCreationThread(pthread_create(&thr[0], NULL, handleTrain1, NULL));
     handleCreationThread(pthread_create(&thr[1], NULL, handleTrain2, NULL));
     handleCreationThread(pthread_create(&thr[2], NULL, handleTrain3, NULL));
     handleCreationThread(pthread_create(&thr[3], NULL, handleTrain4, NULL));
 
-    // handleJoinThread(pthread_join(thrReadEntries, &resStatus));
-    // handleJoinThread(pthread_join(thrSetPriorities, &resStatus));
+    handleJoinThread(pthread_join(thrReadEntries, NULL));
+    handleJoinThread(pthread_join(thrSetSpeed, NULL));
 
     handleJoinThread(pthread_join(thr[0], NULL));
     handleJoinThread(pthread_join(thr[1], NULL));
@@ -117,51 +115,44 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-// void *readEntries(void *arg) {
-//     ADC train1(AIN0);
-//     ADC train2(AIN1);
-//     ADC train3(AIN2);
-//     ADC train4(AIN3);
+void *readEntries(void *arg) {
+    ADC train1(AIN0);
+    ADC train2(AIN1);
+    ADC train3(AIN2);
+    ADC train4(AIN3);
 
-//     pthread_t this_thread = pthread_self();
+    pthread_t this_thread = pthread_self();
 
-//     struct sched_param params;
-//     params.sched_priority = sched_get_priority_max(SCHED_RR);
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_RR);
 
-//     handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+    handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
 
-//     while (true) {
-//         valueEntries[0] = train1.getFloatValue();
-//         valueEntries[1] = train2.getFloatValue();
-//         valueEntries[2] = train3.getFloatValue();
-//         valueEntries[3] = train4.getFloatValue();
+    while (true) {
+        valueEntries[0] = train1.getFloatValue();
+        valueEntries[1] = train2.getFloatValue();
+        valueEntries[2] = train3.getFloatValue();
+        valueEntries[3] = train4.getFloatValue();
 
-//         sleep(0.5);
-//     }
-// }
+        sleep(0.5);
+    }
+}
 
-// void *setPriorities(void *arg) {
-//     struct sched_param params;
+void *setSpeed(void *arg) {
+    struct sched_param params;
 
-//     pthread_t this_thread = pthread_self();
-//     params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
+    pthread_t this_thread = pthread_self();
+    params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
 
-//     handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+    handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
 
-//     while (true) {
-//         for (int i = 0; i < NUM_TRAINS; i++) {
-//             if (i == 0) { 
-//                 params.sched_priority = (int) ((valueEntries[i] / 1.8) * (sched_get_priority_max(SCHED_RR) - 2));
-//             } else {
-//                 params.sched_priority = (int) ((valueEntries[i] / MAX_VALUE) * (sched_get_priority_max(SCHED_RR) - 2));
-//             }
-//             sleep_time[i] = (MAX_SLEEP_TIME) / (params.sched_priority / 10);
-//             handlePriority(pthread_setschedparam(thr[i], SCHED_RR, &params));
-//         }
-
-//         sleep(0.5);
-//     }
-// }
+    while (true) {
+        for (int i = 0; i < NUM_TRAINS; i++) {
+            sleep_time[i] = MAX_SLEEP_TIME / valueEntries[i] + 0.1;
+        }
+        sleep(0.5);
+    }
+}
 
 void *handleTrain1(void *arg) {
     int sleepTime = MAX_SLEEP_TIME;
@@ -173,6 +164,8 @@ void *handleTrain1(void *arg) {
     BlackGPIO ledLock3(GPIO_44, output);
 
     while (true) {
+        sleepTime = sleep_time[0];
+
         if (!first) {
             printf("Trem 1 -> cima\n");
             ledFree.setValue(high);
@@ -225,6 +218,8 @@ void *handleTrain2(void *arg) {
     BlackGPIO ledLock2(GPIO_44, output);
 
     while (true) {
+        sleepTime = sleep_time[1];
+
         if (!first) {
             printf("Trem 2 -> baixo\n");
             ledFree.setValue(high);
@@ -269,6 +264,8 @@ void *handleTrain3(void *arg) {
     BlackGPIO ledLock3(GPIO_44, output);
     
     while (true) {
+        sleepTime = sleep_time[2];
+
         printf("Trem 3 -> baixo\n");
         ledFree.setValue(high);
         sleep(sleepTime);
@@ -312,6 +309,8 @@ void *handleTrain4(void *arg) {
     BlackGPIO ledLock2(GPIO_44, output);
 
     while (true) {
+        sleepTime = sleep_time[3];
+
 
         if (!first) {
             sem_wait(&semAux);
