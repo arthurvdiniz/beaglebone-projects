@@ -3,6 +3,9 @@
  * Universidade Federal do Rio Grande do Norte
  */
 #include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -12,8 +15,11 @@
 
 #include "BlackGPIO/BlackGPIO.h"
 #include "ADC/Adc.h"
-// #include "BlackADC/BlackADC.h"
 
+#define MULTICAST_ADDR "225.0.0.37"
+#define PORT_SCKT 1802
+
+// defines for trains
 #define NUM_TRAINS 4
 #define MAX_VALUE 1.8
 #define SEM_NORMAL 5
@@ -118,46 +124,68 @@ int main(int argc, char * argv[]) {
 }
 
 void *readEntries(void *arg) {
-    ADC train1(AIN0);
-    ADC train2(AIN1);
-    ADC train3(AIN2);
-    ADC train4(AIN3);
+	int values[NUM_TRAINS];
 
-    pthread_t this_thread = pthread_self();
+	// BEAGLEBONE VARIABLES
+	ADC train1(AIN0);
+	ADC train2(AIN1);
+	ADC train3(AIN2);
+	ADC train4(AIN3);
 
-    struct sched_param params;
-    params.sched_priority = sched_get_priority_max(SCHED_RR);
+	// THREAD SCHEDULING
+	pthread_t this_thread = pthread_self();
 
-    handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+	struct sched_param params;
+	params.sched_priority = sched_get_priority_max(SCHED_RR);
 
-    while (true) {
-        valueEntries[0] = train1.getIntValue();
-        valueEntries[1] = train2.getIntValue();
-        valueEntries[2] = train3.getIntValue();
-        valueEntries[3] = train4.getIntValue();
+	handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
 
-        // for (int i = 0; i < NUM_TRAINS; i++) {
-        //     printf("Trem %d = %d\n", (i+1), valueEntries[i]);
-        // }
+	// SOCKET
+	int sockfd;
+	int len;
+	socklen_t len_recv;
+	struct sockaddr_in address;
+	int result;
 
-        sleep(0.5);
-    }
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = inet_addr(MULTICAST_ADDR);
+	address.sin_port = htons(PORT_SCKT);
+	len = sizeof(address);
+
+	while (true) {
+		values[0] = train1.getIntValue();
+		values[1] = train2.getIntValue();
+		values[2] = train3.getIntValue();
+		values[3] = train4.getIntValue();
+
+		sendto(sockfd, values, sizeof(values), 0, (struct sockaddr *) &address, len);
+
+		// for (int i = 0; i < NUM_TRAINS; i++) {
+		//   printf("Trem %d = %d\n", (i+1), values[i]);
+		// }
+
+		sleep(0.5);
+	}
+
+	close(sockfd);
 }
 
 // void *setSpeed(void *arg) {
-//     struct sched_param params;
+// 	struct sched_param params;
 
-//     pthread_t this_thread = pthread_self();
-//     params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
+// 	pthread_t this_thread = pthread_self();
+// 	params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
 
-//     handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+// 	handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
 
-//     while (true) {
-//         for (int i = 0; i < NUM_TRAINS; i++) {
-//             sleep_time[i] = MAX_SLEEP_TIME / valueEntries[i] + 0.1;
-//         }
-//         sleep(0.5);
-//     }
+// 	while (true) {
+// 		// for (int i = 0; i < NUM_TRAINS; i++) {
+// 		// 	sleep_time[i] = MAX_SLEEP_TIME / valueEntries[i] + 0.1;
+// 		// }
+// 		sleep(0.5);
+// 	}
 // }
 
 // void *handleTrain1(void *arg) {
