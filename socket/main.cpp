@@ -40,9 +40,7 @@ pthread_t thr[NUM_TRAINS];
 
 sem_t semNormal[SEM_NORMAL], semDanger[SEM_DANGER], semAux;
 
-int valueEntries[NUM_TRAINS];
 float sleep_time[NUM_TRAINS];
-
 
 void handleCreationThread(int res) {
     if (res) {
@@ -93,7 +91,7 @@ int main(int argc, char * argv[]) {
     // handleInitSemaphore(sem_init(&semAux, 0, 3));
 
     handleCreationThread(pthread_create(&thrReadEntries, NULL, readEntries, (void *) 1));
-    // handleCreationThread(pthread_create(&thrSetSpeed, NULL, setSpeed, NULL));
+    handleCreationThread(pthread_create(&thrSetSpeed, NULL, setSpeed, NULL));
     
     // handleCreationThread(pthread_create(&thr[0], NULL, handleTrain1, NULL));
     // handleCreationThread(pthread_create(&thr[1], NULL, handleTrain2, NULL));
@@ -101,7 +99,7 @@ int main(int argc, char * argv[]) {
     // handleCreationThread(pthread_create(&thr[3], NULL, handleTrain4, NULL));
 
     handleJoinThread(pthread_join(thrReadEntries, NULL));
-    // handleJoinThread(pthread_join(thrSetSpeed, NULL));
+    handleJoinThread(pthread_join(thrSetSpeed, NULL));
 
     // handleJoinThread(pthread_join(thr[0], NULL));
     // handleJoinThread(pthread_join(thr[1], NULL));
@@ -162,9 +160,7 @@ void *readEntries(void *arg) {
 
 		sendto(sockfd, values, sizeof(values), 0, (struct sockaddr *) &address, len);
 
-		// for (int i = 0; i < NUM_TRAINS; i++) {
-		//   printf("Trem %d = %d\n", (i+1), values[i]);
-		// }
+		printf("Client sent: (Train 1, Train 2, Train 3, Train 4) = (%d, %d, %d, %d)\n", values[0], values[1], values[2], values[3]);
 
 		sleep(0.5);
 	}
@@ -172,21 +168,70 @@ void *readEntries(void *arg) {
 	close(sockfd);
 }
 
-// void *setSpeed(void *arg) {
-// 	struct sched_param params;
 
-// 	pthread_t this_thread = pthread_self();
-// 	params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
+void *setSpeed(void *arg) {
+	int valueEntries[NUM_TRAINS];
 
-// 	handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+	// THREAD SCHEDULING
+	struct sched_param params;
 
-// 	while (true) {
-// 		// for (int i = 0; i < NUM_TRAINS; i++) {
-// 		// 	sleep_time[i] = MAX_SLEEP_TIME / valueEntries[i] + 0.1;
-// 		// }
-// 		sleep(0.5);
-// 	}
-// }
+	pthread_t this_thread = pthread_self();
+	params.sched_priority = sched_get_priority_max(SCHED_RR) - 1;
+
+	handlePriority(pthread_setschedparam(this_thread, SCHED_RR, &params));
+
+	// SOCKET
+	int server_sockfd, client_sockfd;
+	size_t server_len;
+	socklen_t client_len;
+	struct sockaddr_in server_address;
+	struct sockaddr_in client_address;
+	
+	struct ip_mreq mreq;
+
+	if ( (server_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+		printf("An error has occurred on opening socket");
+		exit(1);
+	}
+
+	server_address.sin_family = AF_INET;
+	server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_address.sin_port = htons(PORT_SCKT);
+
+	server_len = sizeof(server_address);
+
+	if ( bind(server_sockfd, (struct sockaddr *) &server_address, server_len) < 0 ) {
+		perror("An error has occurend on binding");
+		exit(1);
+	}
+
+	mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_ADDR);
+	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+	if ( setsockopt(server_sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq) ) < 0) {
+		perror("setsockopt");
+		exit(1);
+	}
+
+	while (true) {
+		printf("Server waiting...\n");
+
+		client_len = sizeof(client_address);
+
+		client_len = sizeof(client_address);
+		if ( recvfrom(server_sockfd, &valueEntries, sizeof(valueEntries), 0, (struct sockaddr *) &client_address, &client_len) < 0 ) {
+			perror("error on RECVFROM()");
+			exit(1);
+		}
+
+		printf("Server received: (Train 1, Train 2, Train 3, Train 4) = (%d, %d, %d, %d)\n", valueEntries[0], valueEntries[1], valueEntries[2], valueEntries[3]);
+
+		for (int i = 0; i < NUM_TRAINS; i++) {
+			sleep_time[i] = MAX_SLEEP_TIME / valueEntries[i] + 0.1;
+		}
+
+		sleep(0.5);
+	}
+}
 
 // void *handleTrain1(void *arg) {
 //     int sleepTime = MAX_SLEEP_TIME;
