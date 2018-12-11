@@ -236,10 +236,10 @@ void *handleTrain1(void *arg) {
 	int sleepTime = MAX_SLEEP_TIME;
 	bool first = false;
 	
-	BlackGPIO ledFree(GPIO_44, output);
-	BlackGPIO ledLock1(GPIO_44, output);
-	BlackGPIO ledLock2(GPIO_44, output);
-	BlackGPIO ledLock3(GPIO_44, output);
+	BlackGPIO ledFree(GPIO_39, output);
+	BlackGPIO ledLock1(GPIO_35, output);
+	BlackGPIO ledLock2(GPIO_67, output);
+	BlackGPIO ledLock3(GPIO_68, output);
 
 	while (true) {
 		sleepTime = sleep_time[0];
@@ -291,9 +291,9 @@ void *handleTrain2(void *arg) {
 	int sleepTime = MAX_SLEEP_TIME;
 	bool first = false;
 
-	BlackGPIO ledFree(GPIO_44, output);
-	BlackGPIO ledLock1(GPIO_44, output);
-	BlackGPIO ledLock2(GPIO_44, output);
+	BlackGPIO ledFree(GPIO_38, output);
+	BlackGPIO ledLock1(GPIO_34, output);
+	BlackGPIO ledLock2(GPIO_66, output);
 
 	while (true) {
 		sleepTime = sleep_time[1];
@@ -335,10 +335,10 @@ void *handleTrain2(void *arg) {
 void *handleTrain3(void *arg) {
 	int sleepTime = MAX_SLEEP_TIME;
 
-	BlackGPIO ledFree(GPIO_44, output);
-	BlackGPIO ledLock1(GPIO_44, output);
-	BlackGPIO ledLock2(GPIO_44, output);
-	BlackGPIO ledLock3(GPIO_44, output);
+	BlackGPIO ledFree(GPIO_26, output);
+	BlackGPIO ledLock1(GPIO_46, output);
+	BlackGPIO ledLock2(GPIO_65, output);
+	BlackGPIO ledLock3(GPIO_63, output);
 	
 	while (true) {
 		sleepTime = sleep_time[2];
@@ -381,9 +381,9 @@ void *handleTrain4(void *arg) {
 	int sleepTime = MAX_SLEEP_TIME;
 	int first = false;
 
-	BlackGPIO ledFree(GPIO_44, output);
-	BlackGPIO ledLock1(GPIO_44, output);
-	BlackGPIO ledLock2(GPIO_44, output);
+	BlackGPIO ledFree(GPIO_47, output);
+	BlackGPIO ledLock1(GPIO_27, output);
+	BlackGPIO ledLock2(GPIO_22, output);
 
 	while (true) {
 		sleepTime = sleep_time[3];
